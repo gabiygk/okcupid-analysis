@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gender Prediction from Text</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-prediction {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .predicted-label {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .predicted-male {
+            color: #4285f4;
+        }
+
+        .predicted-female {
+            color: #ea4335;
+        }
+
+        .probabilities {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .prob-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .prob-male {
+            background: #e8f0fe;
+            color: #1967d2;
+        }
+
+        .prob-female {
+            background: #fce8e6;
+            color: #c5221f;
+        }
+
+        .prob-label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .prob-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .error {
+            background: #fce8e6;
+            color: #c5221f;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .model-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gender Prediction from Text</h1>
+        <p class="subtitle">Enter some text to see what the AI predicts</p>
+
+        {% if not model_loaded %}
+        <div class="model-warning">
+            ⚠️ Model not loaded. Please save the model first by running the save code in your notebook.
+        </div>
+        {% endif %}
+
+        <form id="predictionForm">
+            <div class="form-group">
+                <label for="textInput">Enter text:</label>
+                <textarea 
+                    id="textInput" 
+                    name="text" 
+                    rows="5" 
+                    placeholder="e.g., I love playing basketball and working on cars..."
+                    required
+                ></textarea>
+            </div>
+            <button type="submit" id="submitBtn" {% if not model_loaded %}disabled{% endif %}>
+                Predict Gender
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            Analyzing...
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div id="result">
+            <div class="result-prediction">
+                <div>Predicted Gender:</div>
+                <div class="predicted-label" id="predictedLabel"></div>
+            </div>
+            <div class="probabilities">
+                <div class="prob-item prob-male">
+                    <div class="prob-label">Male Probability</div>
+                    <div class="prob-value" id="maleProb">0%</div>
+                </div>
+                <div class="prob-item prob-female">
+                    <div class="prob-label">Female Probability</div>
+                    <div class="prob-value" id="femaleProb">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const loadingDiv = document.getElementById('loading');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) return;
+
+            // Hide previous results and show loading
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                loadingDiv.style.display = 'none';
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Something went wrong');
+                }
+
+                // Display results
+                const isMale = data.predicted_gender === 'Male';
+                const predictedLabel = document.getElementById('predictedLabel');
+                predictedLabel.textContent = data.predicted_gender;
+                predictedLabel.className = 'predicted-label ' + (isMale ? 'predicted-male' : 'predicted-female');
+
+                document.getElementById('maleProb').textContent = 
+                    (data.probabilities.Male * 100).toFixed(1) + '%';
+                document.getElementById('femaleProb').textContent = 
+                    (data.probabilities.Female * 100).toFixed(1) + '%';
+
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
