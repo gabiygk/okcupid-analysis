@@ -4,7 +4,7 @@ A simple web interface to demonstrate the gender prediction AI from text analysi
 
 ## Setup
 
-1. **First, save your trained model** by running the model saving cell in `analysis.ipynb` (it will create `classifier/tfidf_vectorizer.pkl` and `classifier/gender_classifier.pkl`)
+1. **First, save the trained model** by running the model saving cell in `analysis.ipynb` (it will create `classifier/tfidf_vectorizer.pkl` and `classifier/gender_classifier.pkl`)
 
 2. **Install dependencies** (if not already installed):
    ```bash
