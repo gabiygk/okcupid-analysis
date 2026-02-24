@@ -26,6 +26,7 @@ wheels/
 # Jupyter Notebook
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+analysis_femgen.ipynb
 
 # Model files (if too large, you may want to use Git LFS)
 # Uncomment if you don't want to commit model files:
